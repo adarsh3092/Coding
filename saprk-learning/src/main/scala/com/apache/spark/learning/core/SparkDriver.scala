@@ -27,9 +27,12 @@ object UserMaximumTripInEachMonth {
       ("uesr2", "trip1", Timestamp.valueOf("2018-11-01 09:08:00")))
     //val
     val rdd = spark.sparkContext.parallelize(seq, 8)
+    //Convert rdd to dataframe
     val tripsDF = rdd.toDF("user", "trip", "datetime")
-    val df = tripsDF.groupBy(month(tripsDF("datetime")), $"user").agg(count($"user")).orderBy("month(datetime)", "count(user)")
-    val window = Window.partitionBy("month(datetime)")
+    
+   // val df = tripsDF.groupBy(month(tripsDF("datetime")), $"user").agg(count($"user")).orderBy("month(datetime)", "count(user)")
+   // val window = Window.partitionBy("month(datetime)")
+    
     val winForEachMonth = Window.partitionBy(month($"datetime"))
     val win = Window.partitionBy(month($"datetime"), $"user").orderBy(month($"datetime"))
     val countTripUsingWindow = tripsDF

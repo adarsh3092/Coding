@@ -5,6 +5,7 @@ import scala.collection.mutable.ListBuffer
 import java.sql.Timestamp
 import scala.util.Random
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
 
 object FillTheMissTempratureValues {
   def main(args: Array[String]) {
@@ -21,7 +22,7 @@ object FillTheMissTempratureValues {
         dateTimeString += ":" + "0" + i
       else
         dateTimeString += ":" + i
-      for (j <- 0 to 59 by 2) {
+      for (j <- 0 to 59 by 9) {
         val tmp2=dateTimeString
         if (j / 10 == 0) {
           dateTimeString += ":" + "0" + j
@@ -40,7 +41,8 @@ object FillTheMissTempratureValues {
    val (minp,maxp) = df.select(min("time").cast("bigint"),max("time").cast("bigint")).as[(Long,Long)].first()
     val rangeDF=spark.range(minp, maxp, 1).select($"id".cast("timestamp").alias("time"))
     val df_with_missingval=rangeDF.join(df, Seq("time"), "leftouter")
-     df_with_missingval.na.fill(0).show
+    // df_with_missingval.na.fill(0).show
+     df_with_missingval.withColumn("filled_col", last("tmp",true).over(Window.orderBy("time").rowsBetween(-100000, 0))).show
     //println(list.toDF())
    // val index = dateTimeString.substring(dateTimeString.indexOf(":") + 1, dateTimeString.lastIndexOf(":"))
     //println(index)
